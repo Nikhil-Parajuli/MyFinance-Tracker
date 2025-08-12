@@ -3,10 +3,10 @@ import { AuthState, User, LoginCredentials, SignupCredentials } from '../types';
 import { 
   loginUser, 
   signupUser, 
-  getCurrentUser, 
-  saveCurrentUser, 
-  clearCurrentUser 
-} from '../utils/authStorage';
+  logoutUser,
+  getCurrentUser,
+  onAuthStateChange
+} from '../utils/supabaseAuth';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
@@ -56,24 +56,30 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for existing session on mount
+  // Check for existing session on mount and listen to auth changes
   useEffect(() => {
-    const checkAuthState = () => {
-      const currentUser = getCurrentUser();
+    const initializeAuth = async () => {
+      const currentUser = await getCurrentUser();
       dispatch({ type: 'SET_USER', payload: currentUser });
     };
 
-    checkAuthState();
+    initializeAuth();
+
+    // Listen to auth state changes
+    const { data: { subscription } } = onAuthStateChange((user) => {
+      dispatch({ type: 'SET_USER', payload: user });
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message: string }> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const result = loginUser(credentials);
+      const result = await loginUser(credentials);
       
       if (result.success && result.user) {
-        saveCurrentUser(result.user);
         dispatch({ type: 'SET_USER', payload: result.user });
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -90,10 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const result = signupUser(credentials);
+      const result = await signupUser(credentials);
       
       if (result.success && result.user) {
-        saveCurrentUser(result.user);
         dispatch({ type: 'SET_USER', payload: result.user });
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -106,9 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    clearCurrentUser();
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      await logoutUser();
+      dispatch({ type: 'LOGOUT' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if there's an error
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   const value: AuthContextType = {

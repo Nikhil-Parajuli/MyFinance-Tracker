@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { isValidEmail, validatePassword } from '../utils/authStorage';
+import { isValidEmail, validatePassword } from '../utils/supabaseAuth';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
