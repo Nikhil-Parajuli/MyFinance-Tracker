@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { isValidEmail } from '../utils/supabaseAuth';
 import EnvironmentCheck from '../components/common/EnvironmentCheck';
+import DatabaseDebug from '../components/common/DatabaseDebug';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -189,6 +190,9 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      
+      {/* Database Debug Component */}
+      <DatabaseDebug />
     </div>
   );
 }

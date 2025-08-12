@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Wallet, PiggyBank, History, Settings, Home, Menu, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import DatabaseSetup from './common/DatabaseSetup';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -164,6 +165,9 @@ export default function Layout({ children }: LayoutProps) {
           </main>
         </div>
       </div>
+      
+      {/* Database Setup Component */}
+      <DatabaseSetup />
     </div>
   );
 }
