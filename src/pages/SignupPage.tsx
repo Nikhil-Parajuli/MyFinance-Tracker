@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { isValidEmail, validatePassword } from '../utils/supabaseAuth';
+import EnvironmentCheck from '../components/common/EnvironmentCheck';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -96,6 +97,9 @@ export default function SignupPage() {
             Join us to start tracking your finances
           </p>
         </div>
+
+        {/* Environment Check */}
+        <EnvironmentCheck />
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

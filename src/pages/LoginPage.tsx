@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { isValidEmail } from '../utils/supabaseAuth';
+import EnvironmentCheck from '../components/common/EnvironmentCheck';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -76,6 +77,9 @@ export default function LoginPage() {
             Sign in to your account to continue
           </p>
         </div>
+
+        {/* Environment Check */}
+        <EnvironmentCheck />
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -181,7 +185,7 @@ export default function LoginPage() {
         {/* Demo Credentials */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800 text-center">
-            <strong>Demo:</strong> Create an account or use existing credentials from your browser storage
+            <strong>Database Authentication:</strong> Create an account to store your data securely in the cloud
           </p>
         </div>
       </div>
