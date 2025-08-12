@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Wallet, PiggyBank, History, Settings, Home, Menu, X } from 'lucide-react';
+import { Wallet, PiggyBank, History, Settings, Home, Menu, X, LogOut, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,11 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   const NavLinks = () => (
     <>
@@ -89,12 +95,31 @@ export default function Layout({ children }: LayoutProps) {
             <Wallet className="w-6 h-6" />
             <span className="text-xl font-bold">Mero HisabKitab</span>
           </div>
-          <button
-            className="lg:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          
+          <div className="flex items-center space-x-4">
+            {/* User Info - Desktop */}
+            <div className="hidden lg:flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <User className="w-5 h-5" />
+                <span className="text-sm font-medium">{user?.fullName}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1 px-3 py-1 rounded-md bg-indigo-700 hover:bg-indigo-800 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Logout</span>
+              </button>
+            </div>
+            
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </nav>
       
@@ -108,6 +133,21 @@ export default function Layout({ children }: LayoutProps) {
           >
             <nav className="space-y-2 p-4">
               <NavLinks />
+              
+              {/* Mobile User Info & Logout */}
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-2 p-2 text-gray-700">
+                  <User className="w-5 h-5" />
+                  <span className="text-sm font-medium">{user?.fullName}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 p-2 w-full text-left rounded hover:bg-red-50 text-red-600"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
             </nav>
           </aside>
 

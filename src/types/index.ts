@@ -46,3 +46,29 @@ export const INCOME_CATEGORIES = [
   'Freelance',
   'Others'
 ] as const;
+
+// Authentication types
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  createdAt: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignupCredentials {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}

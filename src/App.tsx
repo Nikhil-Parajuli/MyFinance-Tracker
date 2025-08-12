@@ -1,6 +1,9 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import TransactionsPage from './pages/TransactionsPage';
 import SavingsGoalsPage from './pages/SavingsGoalsPage';
 import HistoryPage from './pages/HistoryPage';
@@ -9,17 +12,55 @@ import RentalPage from './pages/RentalPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Layout>
+    <AuthProvider>
+      <BrowserRouter>
         <Routes>
-          <Route path="/" element={<TransactionsPage />} />
-          <Route path="/rental" element={<RentalPage />} />
-          <Route path="/savings" element={<SavingsGoalsPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          
+          {/* Protected routes */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Layout>
+                <TransactionsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/rental" element={
+            <ProtectedRoute>
+              <Layout>
+                <RentalPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/savings" element={
+            <ProtectedRoute>
+              <Layout>
+                <SavingsGoalsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/history" element={
+            <ProtectedRoute>
+              <Layout>
+                <HistoryPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Layout>
+                <SettingsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Layout>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
