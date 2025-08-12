@@ -79,9 +79,13 @@ export default function DatabaseSetup() {
                 <AlertCircle className="w-5 h-5 text-red-500" />
                 <h3 className="font-semibold text-red-700">Database Setup Required</h3>
               </div>
-              <p className="text-red-600 text-sm">
+              <p className="text-red-600 text-sm mb-2">
                 Your database tables are missing or not properly configured.
               </p>
+              <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-sm">
+                <strong>⚠️ Important:</strong> If you got "must be owner of table users" error, 
+                use the FIXED SQL below (the old SQL tried to modify auth.users table which is not allowed).
+              </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -110,10 +114,8 @@ export default function DatabaseSetup() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h4 className="font-semibold text-gray-700 mb-2">SQL Schema to Run:</h4>
               <div className="bg-gray-800 text-green-400 p-4 rounded text-xs overflow-x-auto">
-                <pre>{`-- Copy this entire SQL and paste it in Supabase SQL Editor
-
--- Enable Row Level Security
-ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
+                <pre>{`-- FIXED: Copy this entire SQL and paste it in Supabase SQL Editor
+-- This version removes the problematic auth.users modification
 
 -- 1. TRANSACTIONS TABLE
 CREATE TABLE IF NOT EXISTS transactions (
@@ -186,21 +188,29 @@ ALTER TABLE room_rentals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rental_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
--- RLS POLICIES
+-- RLS POLICIES FOR DATA SECURITY
+DROP POLICY IF EXISTS "Users can only see their own transactions" ON transactions;
 CREATE POLICY "Users can only see their own transactions" ON transactions
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only see their own savings goals" ON savings_goals;
 CREATE POLICY "Users can only see their own savings goals" ON savings_goals
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only see their own room rentals" ON room_rentals;
 CREATE POLICY "Users can only see their own room rentals" ON room_rentals
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only see their own rental payments" ON rental_payments;
 CREATE POLICY "Users can only see their own rental payments" ON rental_payments
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only see their own settings" ON user_settings;
 CREATE POLICY "Users can only see their own settings" ON user_settings
-  FOR ALL USING (auth.uid() = user_id);`}</pre>
+  FOR ALL USING (auth.uid() = user_id);
+
+-- SUCCESS MESSAGE
+SELECT 'Database schema created successfully!' as status;`}</pre>
               </div>
             </div>
 
