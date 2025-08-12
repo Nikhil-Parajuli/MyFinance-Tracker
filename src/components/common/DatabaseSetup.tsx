@@ -83,8 +83,12 @@ export default function DatabaseSetup() {
                 Your database tables are missing or not properly configured.
               </p>
               <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-sm">
-                <strong>⚠️ Important:</strong> If you got "must be owner of table users" error, 
-                use the FIXED SQL below (the old SQL tried to modify auth.users table which is not allowed).
+                <strong>⚠️ If you're getting errors:</strong>
+                <ul className="list-disc list-inside mt-1 text-xs">
+                  <li><strong>"must be owner of table users"</strong> → Use this BULLETPROOF version</li>
+                  <li><strong>"column room_rental_id does not exist"</strong> → This version fixes table creation order</li>
+                  <li><strong>"relation already exists"</strong> → This version drops existing tables first</li>
+                </ul>
               </div>
             </div>
 
@@ -113,14 +117,23 @@ export default function DatabaseSetup() {
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h4 className="font-semibold text-gray-700 mb-2">SQL Schema to Run:</h4>
-              <div className="bg-gray-800 text-green-400 p-4 rounded text-xs overflow-x-auto">
-                <pre>{`-- FIXED: Copy this entire SQL and paste it in Supabase SQL Editor
--- This version removes the problematic auth.users modification
+              <div className="bg-gray-800 text-green-400 p-4 rounded text-xs overflow-x-auto max-h-96">
+                <pre>{`-- BULLETPROOF VERSION: Handles all dependency and ordering issues
+-- Copy this ENTIRE SQL and paste it in Supabase SQL Editor
 
--- 1. TRANSACTIONS TABLE
-CREATE TABLE IF NOT EXISTS transactions (
+-- Step 1: Clean slate (removes any existing tables)
+DROP TABLE IF EXISTS rental_payments CASCADE;
+DROP TABLE IF EXISTS room_rentals CASCADE;
+DROP TABLE IF EXISTS savings_goals CASCADE;
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS user_settings CASCADE;
+
+-- Step 2: Create tables in correct order
+
+-- TRANSACTIONS TABLE
+CREATE TABLE transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   amount DECIMAL(12,2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'NPR' CHECK (currency IN ('NPR', 'USD')),
   type VARCHAR(10) NOT NULL CHECK (type IN ('income', 'expense')),
@@ -133,10 +146,10 @@ CREATE TABLE IF NOT EXISTS transactions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. SAVINGS GOALS TABLE  
-CREATE TABLE IF NOT EXISTS savings_goals (
+-- SAVINGS GOALS TABLE
+CREATE TABLE savings_goals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name VARCHAR(100) NOT NULL,
   target_amount DECIMAL(12,2) NOT NULL,
   current_amount DECIMAL(12,2) DEFAULT 0,
@@ -146,10 +159,10 @@ CREATE TABLE IF NOT EXISTS savings_goals (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. ROOM RENTALS TABLE
-CREATE TABLE IF NOT EXISTS room_rentals (
+-- ROOM RENTALS TABLE
+CREATE TABLE room_rentals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   room_number VARCHAR(20) NOT NULL,
   tenant_name VARCHAR(100) NOT NULL,
   rent_amount DECIMAL(10,2) NOT NULL,
@@ -160,11 +173,20 @@ CREATE TABLE IF NOT EXISTS room_rentals (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. RENTAL PAYMENTS TABLE
-CREATE TABLE IF NOT EXISTS rental_payments (
+-- USER SETTINGS TABLE
+CREATE TABLE user_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  room_rental_id UUID REFERENCES room_rentals(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  default_currency VARCHAR(3) DEFAULT 'NPR' CHECK (default_currency IN ('NPR', 'USD')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RENTAL PAYMENTS TABLE (created after room_rentals)
+CREATE TABLE rental_payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  room_rental_id UUID REFERENCES room_rentals(id) ON DELETE CASCADE NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'NPR' CHECK (currency IN ('NPR', 'USD')),
   payment_date DATE NOT NULL,
@@ -172,45 +194,27 @@ CREATE TABLE IF NOT EXISTS rental_payments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 5. USER SETTINGS TABLE
-CREATE TABLE IF NOT EXISTS user_settings (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  default_currency VARCHAR(3) DEFAULT 'NPR' CHECK (default_currency IN ('NPR', 'USD')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- ENABLE ROW LEVEL SECURITY
+-- Step 3: Enable Row Level Security
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE savings_goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_rentals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rental_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
--- RLS POLICIES FOR DATA SECURITY
-DROP POLICY IF EXISTS "Users can only see their own transactions" ON transactions;
+-- Step 4: RLS Policies for data security
 CREATE POLICY "Users can only see their own transactions" ON transactions
   FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can only see their own savings goals" ON savings_goals;
 CREATE POLICY "Users can only see their own savings goals" ON savings_goals
   FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can only see their own room rentals" ON room_rentals;
 CREATE POLICY "Users can only see their own room rentals" ON room_rentals
   FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can only see their own rental payments" ON rental_payments;
 CREATE POLICY "Users can only see their own rental payments" ON rental_payments
   FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can only see their own settings" ON user_settings;
 CREATE POLICY "Users can only see their own settings" ON user_settings
   FOR ALL USING (auth.uid() = user_id);
 
--- SUCCESS MESSAGE
-SELECT 'Database schema created successfully!' as status;`}</pre>
+-- Success message
+SELECT 'Database schema created successfully! All 5 tables ready.' as status;`}</pre>
               </div>
             </div>
 

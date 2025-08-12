@@ -6,7 +6,7 @@ export const testDatabaseConnection = async () => {
     console.log('Testing Supabase connection...');
     
     // Test basic connection
-    const { data: healthCheck, error: healthError } = await supabase
+    const { error: healthError } = await supabase
       .from('transactions')
       .select('count')
       .limit(1);
