@@ -3,7 +3,7 @@ import { PlusCircle, DollarSign, Tag, FileText, Users } from 'lucide-react';
 import { Transaction, Currency, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../types';
 
 interface TransactionFormProps {
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  onSubmit: (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
 }
 
 export default function TransactionForm({ onSubmit }: TransactionFormProps) {
@@ -24,9 +24,10 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
       currency,
       type,
       category,
-      subCategory,
+      sub_category: subCategory,
       description,
-      isPersonal,
+      is_personal: isPersonal,
+      date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     });
     // Reset form
     setAmount('');

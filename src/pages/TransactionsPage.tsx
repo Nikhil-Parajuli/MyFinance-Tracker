@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Loader, AlertCircle } from 'lucide-react';
 import TransactionForm from '../components/transactions/TransactionForm';
 import TransactionList from '../components/transactions/TransactionList';
@@ -7,6 +7,7 @@ import TransactionDownload from '../components/transactions/TransactionDownload'
 import DailyTransactionSummary from '../components/transactions/DailyTransactionSummary';
 import ExpenseBreakdown from '../components/charts/ExpenseBreakdown';
 import SavingsTrend from '../components/charts/SavingsTrend';
+import DatabaseMigrationSuccess from '../components/common/DatabaseMigrationSuccess';
 import { useTransactions } from '../hooks/useTransactions';
 import { Currency } from '../types';
 
@@ -52,6 +53,9 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Database Migration Success Message */}
+      <DatabaseMigrationSuccess />
+      
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
         <select
